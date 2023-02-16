@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TicTacToe game</title>
+</head>
+<body>
+
+<div id="message"></div>
+
+<table>
+<tr> <td id="c00"> </td>  <td id="c01"> </td>  <td id="c02"> </td> </tr>
+<tr> <td id="c10"> </td>  <td id="c11"> </td>  <td id="c12"> </td> </tr>
+<tr> <td id="c20"> </td>  <td id="c21"> </td>  <td id="c22"> </td> </tr>
+</table>
+
+<div id="moves"></div>
+
+<style>
+td {
+  border: 1px solid black;
+  width: 50px;
+  height: 50px;
+  text-align: center;
+}
+</style>
+
+<script>
+let ids = document.all
+
+let initial_player = 'o'
+let next_player = initial_player
+set_next_player(next_player)
+function set_next_player(player){
+    next_player = player
+    ids.message.textContent = `next player is ${next_player}`
+}
+
+let grid_current = [
+    ['','',''],
+    ['','',''],
+    ['','',''],
+    ]
+
+let grid_phases = [grid_copy(grid_current)]
+let grid_current_phase = 0
+moves_list()
+function moves_list(){
+    ids.moves.innerHTML = ''
+    for(let move_id=0; move_id<grid_phases.length; move_id++){
+        ids.moves.innerHTML += `<button onclick="move(${move_id})">move #${move_id}</button> <br>`
+    }
+}
+function move(move_id){
+    grid_current_phase = move_id
+    set_next_player(grid_current_phase%2==0?initial_player:other_player(initial_player))
+    grid_current = grid_phases[grid_current_phase]
+    set_grid(grid_current)
+}
+
+set_grid(grid_current)
+function set_grid(grid){
+    for(let i=0; i<3; i++)
+        for(let j=0; j<3; j++)
+            ids['c'+i+j].textContent = grid[i][j]
+
+    if(calculate_winner(grid))
+        ids.message.textContent = `winning player is ${calculate_winner(grid)}`
+}        
+grid_clicks()
+function grid_clicks(){
+    for(let i=0; i<3; i++){
+        for(let j=0; j<3; j++){
+            ids['c'+i+j].onclick = function(){
+                
+                if(calculate_winner(grid_current)!==null){
+                    alert('game ended')
+                    return false
+                }
+
+                if(grid_current[i][j]!==''){
+                    alert('not here')
+                    return false
+                }
+
+                let grid = grid_copy(grid_current)
+                grid[i][j] = next_player
+
+                set_next_player(other_player(next_player))
+                set_grid(grid)
+                
+                grid_phases.length = ++grid_current_phase
+                grid_phases.push(grid)
+                moves_list()
+                grid_current = grid
+            }
+        }
+    }
+}
+
+function other_player(player) {
+    return player==='x' ? 'o' : 'x'
+}
+
+function grid_copy(grid){
+    let copy = [
+        [...grid[0]],
+        [...grid[1]],
+        [...grid[2]],
+        ]
+    return copy
+}
+
+function calculate_winner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+  ]
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i]
+    function index(i){
+        return squares[Math.trunc(i/3)][i%3]
+    }
+    if (index(a) && index(a) === index(b) && index(a) === index(c)) {
+      return index(a)
+    }
+  }
+  return null
+}
+</script>
+
+</body>
+</html>
