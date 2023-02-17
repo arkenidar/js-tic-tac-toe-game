@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -66,8 +66,11 @@ function set_grid(grid){
         for(let j=0; j<3; j++)
             ids['c'+i+j].textContent = grid[i][j]
 
-    if(calculate_winner(grid))
+    if(calculate_winner(grid) !== null)
         ids.message.textContent = `winning player is ${calculate_winner(grid)}`
+    
+    if(calculate_winner(grid)===null && grid_current_phase==9)
+        ids.message.textContent = "no moves left"
 }        
 grid_clicks()
 function grid_clicks(){
@@ -75,7 +78,7 @@ function grid_clicks(){
         for(let j=0; j<3; j++){
             ids['c'+i+j].onclick = function(){
                 
-                if(calculate_winner(grid_current)!==null){
+                if( game_ended(grid_current) ){
                     alert('game ended')
                     return false
                 }
@@ -89,9 +92,10 @@ function grid_clicks(){
                 grid[i][j] = next_player
 
                 set_next_player(other_player(next_player))
+                grid_current_phase += 1
                 set_grid(grid)
                 
-                grid_phases.length = ++grid_current_phase
+                grid_phases.length = grid_current_phase
                 grid_phases.push(grid)
                 moves_list()
                 grid_current = grid
@@ -111,6 +115,10 @@ function grid_copy(grid){
         [...grid[2]],
         ]
     return copy
+}
+
+function game_ended(grid){
+    return calculate_winner(grid)!==null || grid_current_phase==9
 }
 
 function calculate_winner(squares) {
