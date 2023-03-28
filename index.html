@@ -50,11 +50,14 @@ moves_list()
 function moves_list(){
     ids.moves.innerHTML = ''
     for(let move_id=0; move_id<grid_phases.length; move_id++){
-        ids.moves.innerHTML += `<button onclick="move(${move_id})">move #${move_id}</button> <br>`
+        let highlight = 'style="border: 4px solid red;"'
+        if(move_id!=grid_current_phase) highlight=""
+        ids.moves.innerHTML += `<button ${highlight} onclick="move(${move_id})">move #${move_id}</button> <br>`
     }
 }
 function move(move_id){
     grid_current_phase = move_id
+    moves_list()
     set_next_player(grid_current_phase%2==0?initial_player:other_player(initial_player))
     grid_current = grid_phases[grid_current_phase]
     set_grid(grid_current)
