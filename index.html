@@ -8,9 +8,11 @@
 </head>
 
 <body>
-
+  <!-- Game status and next player message display -->
   <div id="message"></div>
 
+  <!-- 3x3 Tic-Tac-Toe game grid -->
+  <!-- Each cell has an ID format: c[row][column] (e.g., c00, c01, c02) -->
   <table style="text-transform: uppercase;">
     <tr>
       <td id="c00"> </td>
@@ -29,7 +31,9 @@
     </tr>
   </table>
 
+  <!-- CSS Styles for game appearance -->
   <style>
+    /* Grid cell styling - creates bordered squares for the game */
     td {
       border: 1px solid black;
       width: 50px;
@@ -37,82 +41,140 @@
       text-align: center;
     }
 
+    /* Move navigation button styling */
     button {
       height: 35px;
     }
   </style>
 
   <script>
+    // ==================== GAME INITIALIZATION ====================
+    
+    // Quick reference to all DOM elements by ID
     let ids = document.all
 
+    // Game configuration - starting player
     let initial_player = 'o'
     let next_player = initial_player
+    
+    // Initialize the game with the starting player
     set_next_player(next_player)
+    
+    /**
+     * Updates the next player and displays the current game status
+     * @param {string} player - The player whose turn it is ('x' or 'o')
+     */
     function set_next_player(player) {
       next_player = player
       ids.message.textContent = `next player is ${next_player}`
     }
 
+    // ==================== GAME STATE MANAGEMENT ====================
+    
+    // Current game grid - 3x3 array representing the board state
+    // Empty strings represent empty cells, 'x'/'o' represent player moves
     let grid_current = [
       ['', '', ''],
       ['', '', ''],
       ['', '', ''],
     ]
 
-    let grid_phases = [grid_copy(grid_current)]
-    let grid_current_phase = 0
+    // Game history system - stores all game phases for move navigation
+    let grid_phases = [grid_copy(grid_current)]  // Array of all game states
+    let grid_current_phase = 0                   // Current position in game history
+    
+    // Initialize move list when page loads
     addEventListener("DOMContentLoaded", (event) => { moves_list() })
+    
+    /**
+     * Generates and displays the move navigation buttons
+     * Highlights the current move with a red border
+     */
     function moves_list() {
       ids.moves.innerHTML = ''
       for (let move_id = 0; move_id < grid_phases.length; move_id++) {
+        // Highlight current move with red border
         let highlight = 'style="border: 4px solid red;"'
         if (move_id != grid_current_phase) highlight = ""
         ids.moves.innerHTML += `<button ${highlight} onclick="move(${move_id})">move #${move_id}</button> `
       }
     }
+    
+    /**
+     * Navigate to a specific move in the game history
+     * @param {number} move_id - The move number to navigate to
+     */
     function move(move_id) {
       grid_current_phase = move_id
-      moves_list()
+      moves_list()  // Update button highlighting
+      
+      // Set the correct next player based on move number
       set_next_player(grid_current_phase % 2 == 0 ? initial_player : other_player(initial_player))
+      
+      // Load the grid state for this move
       grid_current = grid_phases[grid_current_phase]
       set_grid(grid_current)
     }
 
+    // ==================== DISPLAY MANAGEMENT ====================
+    
+    // Initialize the visual grid display
     set_grid(grid_current)
+    
+    /**
+     * Updates the visual display of the game grid and status messages
+     * @param {Array} grid - 3x3 array representing the current board state
+     */
     function set_grid(grid) {
+      // Update each cell in the HTML table with current grid values
       for (let i = 0; i < 3; i++)
         for (let j = 0; j < 3; j++)
           ids['c' + i + j].textContent = grid[i][j]
 
+      // Check for game end conditions and update status message
       if (calculate_winner(grid) !== null)
         ids.message.textContent = `winning player is ${calculate_winner(grid)}`
 
       if (calculate_winner(grid) === null && grid_current_phase == 9)
         ids.message.textContent = "no moves left"
     }
+    
+    // ==================== GAME INTERACTION ====================
+    
+    // Set up click handlers for all grid cells
     grid_clicks()
+    
+    /**
+     * Attaches click event listeners to all grid cells
+     * Handles player moves and game state updates
+     */
     function grid_clicks() {
       for (let i = 0; i < 3; i++) {
         for (let j = 0; j < 3; j++) {
           ids['c' + i + j].onclick = function () {
 
+            // Prevent moves if game has ended
             if (game_ended(grid_current)) {
               alert('game ended')
               return false
             }
 
+            // Prevent moves on occupied cells
             if (grid_current[i][j] !== '') {
               alert('not here')
               return false
             }
 
+            // Create new grid state with player's move
             let grid = grid_copy(grid_current)
             grid[i][j] = next_player
 
+            // Update game state
             set_next_player(other_player(next_player))
             grid_current_phase += 1
             set_grid(grid)
 
+            // Update game history - remove future moves and add new state
             grid_phases.length = grid_current_phase
             grid_phases.push(grid)
             moves_list()
@@ -122,10 +184,22 @@
       }
     }
 
+    // ==================== UTILITY FUNCTIONS ====================
+
+    /**
+     * Returns the opposite player
+     * @param {string} player - Current player ('x' or 'o')
+     * @returns {string} The other player ('o' or 'x')
+     */
     function other_player(player) {
       return player === 'x' ? 'o' : 'x'
     }
 
+    /**
+     * Creates a deep copy of the game grid
+     * @param {Array} grid - 3x3 array to copy
+     * @returns {Array} New 3x3 array with same values
+     */
     function grid_copy(grid) {
       let copy = [
         [...grid[0]],
@@ -135,35 +209,55 @@
       return copy
     }
 
+    /**
+     * Checks if the game has ended (winner found or board full)
+     * @param {Array} grid - Current game grid to check
+     * @returns {boolean} True if game has ended, false otherwise
+     */
     function game_ended(grid) {
       return calculate_winner(grid) !== null || grid_current_phase == 9
     }
 
+    /**
+     * Determines if there's a winner on the current board
+     * Checks all possible winning combinations (rows, columns, diagonals)
+     * @param {Array} squares - 3x3 grid to analyze
+     * @returns {string|null} Winning player ('x' or 'o') or null if no winner
+     */
     function calculate_winner(squares) {
+      // All possible winning line combinations (converted to flat array indices)
       const lines = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6]
+        [0, 1, 2],  // Top row
+        [3, 4, 5],  // Middle row
+        [6, 7, 8],  // Bottom row
+        [0, 3, 6],  // Left column
+        [1, 4, 7],  // Middle column
+        [2, 5, 8],  // Right column
+        [0, 4, 8],  // Diagonal top-left to bottom-right
+        [2, 4, 6]   // Diagonal top-right to bottom-left
       ]
+      
       for (let i = 0; i < lines.length; i++) {
         const [a, b, c] = lines[i]
+        
+        // Helper function to convert flat index to 2D grid coordinates
         function index(i) {
           return squares[Math.trunc(i / 3)][i % 3]
         }
+        
+        // Check if all three positions in this line have the same non-empty value
         if (index(a) && index(a) === index(b) && index(a) === index(c)) {
           return index(a)
         }
       }
-      return null
+      return null  // No winner found
     }
   </script>
 
+  <!-- ==================== FOOTER SECTION ==================== -->
   <hr>
+  
+  <!-- Project and author links -->
   <ul>
     <li><a href="https://github.com/arkenidar/js-tic-tac-toe-game" target="_blank">
         this code of : @arkenidar/js-tic-tac-toe-game . </a>
@@ -174,9 +268,11 @@
   </ul>
   <hr>
 
+  <!-- Move navigation buttons container -->
   <div id="moves"></div>
 
   <hr>
+  <!-- External script for showing source code -->
   <script src="https://arkenidar.com/web/show-source.js"></script>
 
 </body>
